@@ -130,7 +130,7 @@
     var decel          = -maxSpeed/5;             // 'natural' deceleration rate when neither accelerating, nor braking
     var offRoadDecel   = -maxSpeed/2;             // off road deceleration is somewhere in between
     var offRoadLimit   =  maxSpeed/4;             // limit when off road deceleration no longer applies (e.g. you can always go at least this speed even when off road)
-    var totalCars      = 200;                     // total number of cars on the road
+    var totalCars      = 50;                     // total number of cars on the road
     var currentLapTime = 0;                       // current lap time
     var lastLapTime    = null;                    // last lap time
 
@@ -151,6 +151,7 @@
     //=========================================================================
 
     function update(dt) {
+      agent.update();
 
       var n, car, carW, sprite, spriteW;
       var playerSegment = findSegment(position+playerZ);
@@ -182,7 +183,7 @@
 
         if (speed > offRoadLimit)
           speed = Util.accelerate(speed, offRoadDecel, dt);
-
+/*
         for(n = 0 ; n < playerSegment.sprites.length ; n++) {
           sprite  = playerSegment.sprites[n];
           spriteW = sprite.source.w * SPRITES.SCALE;
@@ -191,7 +192,7 @@
             position = Util.increase(playerSegment.p1.world.z, -playerZ, trackLength); // stop in front of sprite (at front of segment)
             break;
           }
-        }
+        }*/
       }
 
       for(n = 0 ; n < playerSegment.cars.length ; n++) {
@@ -207,7 +208,7 @@
       }
 
 
-      playerX = Util.limit(playerX, -3, 3);     // dont ever let it go too far out of bounds
+      playerX = Util.limit(playerX, -1.2, 1.2);     // was 3, dont ever let it go too far out of bounds
       speed   = Util.limit(speed, 0, maxSpeed); // or exceed maxSpeed
 
       skyOffset  = Util.increase(skyOffset,  skySpeed  * playerSegment.curve * (position-startPosition)/segmentLength, 1);
@@ -216,8 +217,12 @@
 
       if (position > playerZ) {
         if (currentLapTime && (startPosition < playerZ)) {
+            agent.episodeEnd();
+            laps++;
+
           lastLapTime    = currentLapTime;
           currentLapTime = 0;
+
           if (lastLapTime <= Util.toFloat(Dom.storage.fast_lap_time)) {
             Dom.storage.fast_lap_time = lastLapTime;
             updateHud('fast_lap_time', formatTime(lastLapTime));
@@ -238,6 +243,7 @@
 
       updateHud('speed',            5 * Math.round(speed/500));
       updateHud('current_lap_time', formatTime(currentLapTime));
+
     }
 
     //-------------------------------------------------------------------------
@@ -407,6 +413,10 @@
                         playerSegment.p2.world.y - playerSegment.p1.world.y);
         }
       }
+
+        ctx.fillStyle = "blue";
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(laps + ' ' + formatTime(currentLapTime), 10, 20);
     }
 
     function findSegment(z) {
@@ -682,11 +692,16 @@
     }
 
     //=========================================================================
+    var laps = 0;
+    reset({width: 160, height: 120});
 
   </script>
 
+  <script src="node_modules/ccapture.js/build/CCapture.all.min.js"></script>
   <script src="ai/rl.js"></script>
-  <script src="ai/reinforce-agent.js"></script>
+
+  <!--<script src="ai/reinforce-agent-10-interval-temp-cars.js"></script>-->
+  <script src="ai/reinforce-agent-10-interval-temp-cars-loaded.js"></script>
 
 </body> 
 </html>

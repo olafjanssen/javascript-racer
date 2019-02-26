@@ -5,8 +5,17 @@
   <title>Javascript Racer - v2 (curves)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <link href="common.css" rel="stylesheet" type="text/css" />
+  <script src="ai/brain.js"></script>
 </head> 
+  <style>
+    table, #instructions {
+      display: none;
+    }
 
+    #racer {
+      margin-left: 0;
+    }
+  </style>
 <body> 
 
   <table id="controls">
@@ -73,6 +82,8 @@
     </canvas>
     Loading...
   </div>
+  <div id="curlaptime"></div>
+  <div id="laptimes"></div>
 
   <audio id='music'>
     <source src="music/racer.ogg">
@@ -83,6 +94,7 @@
   <script src="stats.js"></script>
   <script src="common.js"></script>
   <script>
+      var currentLapTime = 0, lastLapTime = 0;
 
     var fps           = 60;                      // how many 'update' frames per second
     var step          = 1/fps;                   // how long is each frame (in seconds)
@@ -129,6 +141,8 @@
     var keyFaster     = false;
     var keySlower     = false;
 
+    var laps = 0;
+
     //=========================================================================
     // UPDATE THE GAME WORLD
     //=========================================================================
@@ -138,6 +152,7 @@
       var playerSegment = findSegment(position+playerZ);
       var speedPercent  = speed/maxSpeed;
       var dx            = dt * 2 * speedPercent; // at top speed, should be able to cross from left to right (-1 to +1) in 1 second
+      var startPosition = position;
 
       position = Util.increase(position, dt * speed, trackLength);
 
@@ -165,6 +180,33 @@
       playerX = Util.limit(playerX, -1.2, 1.2);     // dont ever let player go too far out of bounds
       speed   = Util.limit(speed, 0, maxSpeed); // or exceed maxSpeed
 
+        if (position > playerZ) {
+            if (currentLapTime && (startPosition < playerZ)) {
+                lastLapTime    = currentLapTime;
+                currentLapTime = 0;
+
+                document.getElementById('laptimes').innerHTML += formatTime(lastLapTime) + '<br>';
+                agent.episodeEnd();
+                laps++;
+            }
+            else {
+                currentLapTime += dt;
+                document.getElementById('curlaptime').innerHTML = formatTime(currentLapTime);
+            }
+        }
+
+        agent.update();
+    }
+
+
+    function formatTime(dt) {
+        var minutes = Math.floor(dt/60);
+        var seconds = Math.floor(dt - (minutes * 60));
+        var tenths  = Math.floor(10 * (dt - Math.floor(dt)));
+        if (minutes > 0)
+            return minutes + "." + (seconds < 10 ? "0" : "") + seconds + "." + tenths;
+        else
+            return seconds + "." + tenths;
     }
 
     //=========================================================================
@@ -223,6 +265,10 @@
                     height,
                     speed * (keyLeft ? -1 : keyRight ? 1 : 0),
                     0);
+
+        ctx.fillStyle = "blue";
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(laps + ' ' + formatTime(currentLapTime), 10, 20);
     }
 
     //=========================================================================
@@ -380,11 +426,14 @@
     }
 
     //=========================================================================
+    reset({width: 160, height: 120});
 
   </script>
 
+  <script src="node_modules/ccapture.js/build/CCapture.all.min.js"></script>
   <script src="ai/rl.js"></script>
-  <script src="ai/reinforce-agent.js"></script>
 
+    <script src="ai/brain-data-agent.js"></script>
+  <!--<script src="ai/brain-agent.js"></script>-->
 </body> 
 

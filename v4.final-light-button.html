@@ -5,6 +5,8 @@
   <title>Javascript Racer - v4 (final)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <link href="common.css" rel="stylesheet" type="text/css" />
+
+  <script src="https://unpkg.com/brain.js@1.1.2/browser.min.js"></script>
 </head> 
 
 <body> 
@@ -151,6 +153,7 @@
     //=========================================================================
 
     function update(dt) {
+      agent.update();
 
       var n, car, carW, sprite, spriteW;
       var playerSegment = findSegment(position+playerZ);
@@ -207,7 +210,7 @@
       }
 
 
-      playerX = Util.limit(playerX, -3, 3);     // dont ever let it go too far out of bounds
+      playerX = Util.limit(playerX, -1.2, 1.2);     // was 3, dont ever let it go too far out of bounds
       speed   = Util.limit(speed, 0, maxSpeed); // or exceed maxSpeed
 
       skyOffset  = Util.increase(skyOffset,  skySpeed  * playerSegment.curve * (position-startPosition)/segmentLength, 1);
@@ -216,8 +219,12 @@
 
       if (position > playerZ) {
         if (currentLapTime && (startPosition < playerZ)) {
+            agent.episodeEnd();
+            laps++;
+
           lastLapTime    = currentLapTime;
           currentLapTime = 0;
+
           if (lastLapTime <= Util.toFloat(Dom.storage.fast_lap_time)) {
             Dom.storage.fast_lap_time = lastLapTime;
             updateHud('fast_lap_time', formatTime(lastLapTime));
@@ -238,6 +245,7 @@
 
       updateHud('speed',            5 * Math.round(speed/500));
       updateHud('current_lap_time', formatTime(currentLapTime));
+
     }
 
     //-------------------------------------------------------------------------
@@ -407,6 +415,10 @@
                         playerSegment.p2.world.y - playerSegment.p1.world.y);
         }
       }
+
+        ctx.fillStyle = "blue";
+        ctx.font = "bold 10px Arial";
+        ctx.fillText(laps + ' ' + formatTime(currentLapTime), 10, 20);
     }
 
     function findSegment(z) {
@@ -682,11 +694,31 @@
     }
 
     //=========================================================================
+    var laps = 0;
+    // reset({width: 160, height: 120});
 
   </script>
 
+  <script src="node_modules/ccapture.js/build/CCapture.all.min.js"></script>
   <script src="ai/rl.js"></script>
-  <script src="ai/reinforce-agent.js"></script>
+
+  <!--<script src="ai/reinforce-agent-10-interval-temp-cars.js"></script>-->
+
+  <!--<script src="ai/brain-data-agent.js"></script>-->
+  <!--<script src="ai/brain-agent.js"></script>-->
+
+<script>
+
+    var agent = { update: function(){}};
+
+    setTimeout(function(){
+
+        var a = window.crossBrowser_initKeyboardEvent("keypress", {"key": 1, "char": "!", shiftKey: true});
+        alert(a.type + " | " + a.key + " | " + a.char + " | " + a.shiftKey)
+
+    }, 2000);
+
+</script>
 
 </body> 
 </html>
